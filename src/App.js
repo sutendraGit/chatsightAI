@@ -8,11 +8,80 @@ const GlobalStyle = createGlobalStyle`
     font-family: 'Arial', sans-serif;
     background-color: #fff; /* white */
   }
+
+  @keyframes sparkle {
+    0%, 100% { opacity: 0.3; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.2); }
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -200px 0; }
+    100% { background-position: calc(200px + 100%) 0; }
+  }
+
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.6; transform: scale(0.8); }
+    25% { opacity: 1; transform: scale(1.2); }
+    50% { opacity: 0.8; transform: scale(1.4); }
+    75% { opacity: 1; transform: scale(1.1); }
+  }
+
+  .analyzing-text {
+    color: #6b7280;
+    position: relative;
+    font-weight: 400;
+    background: linear-gradient(90deg, #374151 25%, #ffffff 50%, #374151 75%);
+    background-size: 200% 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 1.5s infinite;
+  }
+
+  .analyzing-text::before {
+    content: '';
+  }
+
+  .analyzing-text::after {
+    content: '';
+  }
+
+  .ai-sparkle-message {
+    color: #374151;
+    text-align: center;
+    font-size: 16px;
+    font-family: 'IBM Plex Mono', monospace;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+  }
+
+  .ai-sparkle-message::before {
+    content: '';
+  }
+
+  .ai-sparkle-message::after {
+    content: '';
+  }
+
+  @keyframes aiGlow {
+    0%, 100% { opacity: 0.7; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.05); }
+  }
+
+  .yellow-sparkle {
+    color: #fbbf24;
+    filter: drop-shadow(0 0 4px #fbbf24);
+    font-size: 20px;
+  }
 `;
 
 // Layout
 const Container = styled.div`
   display: flex;
+  flex-direction: column;
   height: 100vh;
   box-sizing: border-box;
   margin: 16px;
@@ -20,6 +89,25 @@ const Container = styled.div`
   border-radius: 12px;
   overflow: hidden;
   background-color: #fff;
+`;
+
+const Header = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  background: #6b7280;
+  color: white;
+  font-size: 24px;
+  font-weight: 600;
+  font-family: 'IBM Plex Mono', monospace;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+`;
+
+const MainContent = styled.div`
+  display: flex;
+  flex: 1;
+  overflow: hidden;
 `;
 
 const ChatPanel = styled.div`
@@ -68,46 +156,82 @@ const MessageBubble = styled.div`
   border-radius: 12px;
   font-size: 14px;
   color: ${(props) =>
-    props.type === "received" ? "#fff" : props.type === "system" ? "#fff" : "#000"};
+    props.type === "received" ? "#374151" : props.type === "system" ? "#fff" : props.type === "analyzing" ? "#6b7280" : "#000"};
   background-color: ${(props) =>
     props.type === "sent"
       ? "#d8b4fe" // light purple
       : props.type === "received"
-      ? "#6b21a8" // dark purple
+      ? "#e5e7eb" // light gray
+      : props.type === "analyzing"
+      ? "transparent" // no background
       : "#9ca3af"}; // system = lighter gray
-  font-family: ${(props) => (props.type === "system" ? "'IBM Plex Mono', monospace" : "inherit")};
+  font-family: 'IBM Plex Mono', monospace;
   align-self: ${(props) =>
-    props.type === "sent" ? "flex-end" : props.type === "received" ? "flex-start" : "center"};
+    props.type === "sent" ? "flex-end" : props.type === "received" || props.type === "analyzing" ? "flex-start" : "center"};
   text-align: ${(props) =>
-    props.type === "sent" ? "right" : props.type === "received" ? "left" : "center"};
+    props.type === "sent" ? "left" : props.type === "received" || props.type === "analyzing" ? "left" : "center"};
+  position: relative;
+  z-index: ${(props) => props.type === "sent" || props.type === "received" ? "5" : "1"};
+  box-shadow: ${(props) => 
+    props.type === "sent" ? "0 4px 12px rgba(124, 58, 237, 0.2)" :
+    props.type === "received" ? "0 4px 12px rgba(156, 163, 175, 0.3)" : "none"};
+  
+  ${(props) => props.type === "analyzing" && `
+    /* No background styling for analyzing */
+  `}
+
+  @keyframes pulse {
+    0%, 100% { 
+      transform: scale(1); 
+      box-shadow: 0 0 20px rgba(156, 163, 175, 0.3);
+    }
+    50% { 
+      transform: scale(1.02); 
+      box-shadow: 0 0 30px rgba(156, 163, 175, 0.5);
+    }
+  }
 `;
 
 // Input area
 const InputArea = styled.div`
   padding: 10px;
-  background: #e9d5ff;
+  background: white;
   display: flex;
   gap: 10px;
+  z-index: 100;
+  position: relative;
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.4);
+  border-radius: 16px;
 `;
 
 const Input = styled.textarea`
   flex: 1;
-  padding: 8px;
+  padding: 16px 20px;
   border-radius: 8px;
-  border: 1px solid #a78bfa;
+  border: 1px solid #d1d5db;
   resize: none;
   font-size: 14px;
+  font-family: 'IBM Plex Mono', monospace;
+  min-height: 60px;
+  max-height: 120px;
   outline: none;
+  line-height: 1.5;
+  background: white;
 `;
 
 const SendButton = styled.button`
   background: #7c3aed;
   color: #fff;
   border: none;
-  padding: 10px 16px;
+  width: 48px;
+  height: 48px;
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
 
   &:hover {
     background: #6d28d9;
@@ -116,11 +240,11 @@ const SendButton = styled.button`
 
 export default function ChatLayout() {
   const [messages, setMessages] = useState([
-    { type: "system", text: "AI ChatSight Studio" },
     { type: "received", text: "Hello, how can I help you today?" },
   ]);
   const [input, setInput] = useState("");
   const [renderContent, setRenderContent] = useState("");
+  const [lastUserMessage, setLastUserMessage] = useState("");
   const messagesEndRef = useRef(null);
 
   const botReplies = [
@@ -169,45 +293,128 @@ export default function ChatLayout() {
       </p>
     </div>`;
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (!input.trim()) return;
-    setMessages((prev) => [...prev, { type: "sent", text: input }]);
-    
-    // Check if user typed "render" to trigger HTML table rendering
-    if (input.toLowerCase().includes('render')) {
-      setRenderContent(htmlContent);
-      setMessages((prev) => [...prev, { type: "received", text: "Here's the sales data table I generated for you." }]);
-      setInput("");
-      return;
-    }
-    
-    // Check if user typed "image" to trigger image rendering
-    if (input.toLowerCase().includes('image')) {
-      setRenderContent(imageContent);
-      setMessages((prev) => [...prev, { type: "received", text: "Here's the sales performance chart I created for you." }]);
-      setInput("");
-      return;
-    }
-    
+    const userMessage = input;
+    setLastUserMessage(userMessage); // Store the last user message
+    setMessages((prev) => [...prev, { type: "sent", text: userMessage }]);
     setInput("");
+    setMessages((prev) => [...prev, { type: "analyzing", text: "Analyzing..." }]);
 
-    // Fake bot reply after 1.5s
-    setTimeout(() => {
-      const randomReply =
-        botReplies[Math.floor(Math.random() * botReplies.length)];
-      setMessages((prev) => [...prev, { type: "received", text: randomReply }]);
+    try {
+      const response = await fetch("http://localhost:8000/query", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ question: userMessage, top_k: 10 }),
+      });
       
-      // If the reply mentions "table" or "data", render the HTML table
-      if (randomReply.includes('table') || randomReply.includes('data')) {
-        setRenderContent(htmlContent);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    }, 1500);
+      
+      const data = await response.json();
+      console.log("API Response:", data);
+      
+      // Remove analyzing message
+      setMessages((prev) => prev.filter((msg) => msg.text !== "Analyzing..."));
+      
+      // If response contains HTML, render it
+      if (data && typeof data.answer === "string") {
+        let htmlContent = data.answer;
+        
+        // Extract HTML from markdown code blocks if present
+        if (htmlContent.includes("```html")) {
+          // More robust HTML extraction
+          const htmlMatch = htmlContent.match(/```html\s*([\s\S]*?)\s*```/);
+          if (htmlMatch) {
+            htmlContent = htmlMatch[1].trim();
+          } else {
+            // Fallback method
+            htmlContent = htmlContent.replace(/```html\s*/g, '');
+            htmlContent = htmlContent.replace(/\s*```/g, '');
+            htmlContent = htmlContent.trim();
+          }
+        }
+        
+        // Decode escaped characters that might come from the API
+        console.log("Before decoding:", htmlContent.length, "chars");
+        console.log("Sample before:", htmlContent.substring(0, 100));
+        
+        htmlContent = htmlContent
+          .replace(/\\x3C/g, '<')           // Fix \x3C to < (4 chars → 1 char = -3 each)
+          .replace(/\\x3E/g, '>')           // Fix \x3E to > (4 chars → 1 char = -3 each)
+          .replace(/\\n/g, '\n')            // Fix newlines (2 chars → 1 char = -1 each)
+          .replace(/\\t/g, '\t')            // Fix tabs (2 chars → 1 char = -1 each)
+          .replace(/\\"/g, '"')             // Fix quotes (2 chars → 1 char = -1 each)
+          .replace(/\\'/g, "'")             // Fix single quotes (2 chars → 1 char = -1 each)
+          .replace(/\\\\/g, '\\');          // Fix backslashes (2 chars → 1 char = -1 each)
+        
+        console.log("After decoding:", htmlContent.length, "chars");
+        console.log("Sample after:", htmlContent.substring(0, 100));
+        console.log("Character difference:", data.answer.length - htmlContent.length);
+        
+        console.log("Original API response length:", data.answer.length);
+        console.log("Processed HTML Content length:", htmlContent.length);
+        console.log("Character difference:", data.answer.length - htmlContent.length);
+        
+        // Count specific escape sequences for debugging
+        const originalContent = data.answer;
+        const x3CCount = (originalContent.match(/\\x3C/g) || []).length;
+        const x3ECount = (originalContent.match(/\\x3E/g) || []).length;
+        const newlineCount = (originalContent.match(/\\n/g) || []).length;
+        
+        console.log("Escape sequence counts:");
+        console.log("- \\x3C (< tags):", x3CCount, "× 3 chars saved =", x3CCount * 3);
+        console.log("- \\x3E (> tags):", x3ECount, "× 3 chars saved =", x3ECount * 3);
+        console.log("- \\n (newlines):", newlineCount, "× 1 char saved =", newlineCount * 1);
+        console.log("- Total expected savings:", (x3CCount * 3) + (x3ECount * 3) + newlineCount);
+        
+        console.log("First 200 chars of processed content:", htmlContent.substring(0, 200));
+        
+        // Check if it contains HTML tags
+        if (htmlContent.includes("<")) {
+          console.log("Setting render content:", htmlContent);
+          
+          // If it's a full HTML document, modify it to use full width
+          if (htmlContent.includes('<!DOCTYPE html>')) {
+            console.log("Full HTML document detected - optimizing for full width");
+            
+            // Modify the CSS to use full width instead of 60%
+            htmlContent = htmlContent
+              .replace(/width:\s*60%/g, 'width: 40%')
+              .replace(/max-width:\s*500px/g, 'max-width: 400px')
+              .replace(/min-height:\s*100vh/g, 'min-height: auto')
+              .replace(/display:\s*flex[^}]+justify-content:\s*center[^}]+align-items:\s*center[^}]*}/g, 
+                      'display: flex; justify-content: center; align-items: flex-start; padding: 20px;');
+          }
+          
+          setRenderContent(htmlContent);
+          setMessages((prev) => [...prev, { type: "received", text: "Here's the result from AI." }]);
+        } else {
+          console.log("No HTML tags found, treating as text:", htmlContent);
+          setMessages((prev) => [...prev, { type: "received", text: data.answer }]);
+        }
+      } else {
+        setMessages((prev) => [...prev, { type: "received", text: "No result returned from API." }]);
+      }
+    } catch (error) {
+      console.error("API Error:", error);
+      setMessages((prev) => prev.filter((msg) => msg.text !== "Analyzing..."));
+      setMessages((prev) => [...prev, { type: "received", text: `Error querying API: ${error.message}` }]);
+    }
   };
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
+    } else if (e.key === "ArrowUp" && input.trim() === "") {
+      e.preventDefault();
+      if (lastUserMessage) {
+        setInput(lastUserMessage);
+      }
     }
   };
 
@@ -216,39 +423,67 @@ export default function ChatLayout() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Debug renderContent changes
+  useEffect(() => {
+    console.log("renderContent state changed:", renderContent);
+  }, [renderContent]);
+
   return (
     <>
       <GlobalStyle />
       <Container>
-        {/* Left Chat Panel */}
-        <ChatPanel>
-          <MessagesContainer>
-            {messages.map((msg, index) => (
-              <MessageBubble key={index} type={msg.type}>
-                {msg.text}
-              </MessageBubble>
-            ))}
-            <div ref={messagesEndRef} />
-          </MessagesContainer>
+        <MainContent>
+          {/* Left Chat Panel */}
+          <ChatPanel>
+            <MessagesContainer>
+              {messages.map((msg, index) => (
+                <MessageBubble key={index} type={msg.type}>
+                  <span className={msg.type === "analyzing" ? "analyzing-text" : ""}>
+                    {msg.text}
+                  </span>
+                </MessageBubble>
+              ))}
+              <div ref={messagesEndRef} />
+            </MessagesContainer>
 
-          <InputArea>
+            <InputArea>
             <Input
               rows={1}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Type your message..."
+              placeholder="Ask ChatSight..."
             />
-            <SendButton onClick={sendMessage}>Send</SendButton>
           </InputArea>
         </ChatPanel>
 
         {/* Right Render Panel */}
         <RenderPanel>
-          {renderContent && (
-            <div dangerouslySetInnerHTML={{ __html: renderContent }} />
+          {renderContent && renderContent.trim() !== "" ? (
+            renderContent.includes('<!DOCTYPE html>') ? (
+              <iframe
+                srcDoc={renderContent}
+                style={{ 
+                  width: '100%', 
+                  height: '600px', 
+                  border: 'none',
+                  borderRadius: '8px',
+                  backgroundColor: 'white',
+                  display: 'block'
+                }}
+                title="Chart Visualization"
+                sandbox="allow-scripts allow-same-origin"
+              />
+            ) : (
+              <div dangerouslySetInnerHTML={{ __html: renderContent }} />
+            )
+          ) : (
+            <div className="ai-sparkle-message">
+              AI ChatSight Studio
+            </div>
           )}
         </RenderPanel>
+        </MainContent>
       </Container>
     </>
   );
